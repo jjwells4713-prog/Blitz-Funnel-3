@@ -9,12 +9,12 @@ const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "";
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID || "";
 
 export const metadata: Metadata = {
-  title: "Blitzmailer — 10–30 Qualified Sales Calls / Month, Done For You",
+  title: "Blitzmailer — 30–60 Qualified Sales Calls / Month, Done For You",
   description:
     "Done-for-you cold email for B2B companies selling high-ticket services. We build, manage, and optimize the entire system. You focus on closing.",
   metadataBase: new URL("https://blitzmailer.site"),
   openGraph: {
-    title: "Blitzmailer — 10–30 Qualified Sales Calls / Month, Done For You",
+    title: "Blitzmailer — 30–60 Qualified Sales Calls / Month, Done For You",
     description:
       "Done-for-you cold email for B2B companies selling high-ticket services.",
     type: "website",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Blitzmailer — 10–30 Qualified Sales Calls / Month",
+    title: "Blitzmailer — 30–60 Qualified Sales Calls / Month",
     description:
       "Done-for-you cold email for B2B. Built, managed, optimized end-to-end.",
   },

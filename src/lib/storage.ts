@@ -71,12 +71,20 @@ export function clearLead(): void {
   }
 }
 
-/** Capture UTMs from the current URL on first visit; returns the merged state. */
+/** Capture UTMs from the current URL on first visit; returns the merged state.
+ *
+ * Reads from two sources, in priority order:
+ *   1. Current URL search params
+ *   2. The `bm_utm` cookie set by middleware (this is the rescue path —
+ *      middleware captures UTMs at the edge before Vercel's apex→www
+ *      redirect strips them from the URL).
+ *
+ * First-touch wins: if a UTM is already in sessionStorage, we don't overwrite it.
+ */
 export function captureUTMsFromURL(): LeadState {
   if (typeof window === "undefined") return {};
   const existing = loadLead();
 
-  const params = new URLSearchParams(window.location.search);
   const utmKeys: (keyof UTMs)[] = [
     "utm_source",
     "utm_medium",
@@ -85,12 +93,21 @@ export function captureUTMsFromURL(): LeadState {
     "utm_term",
   ];
 
+  // Source 1: URL search params
+  const params = new URLSearchParams(window.location.search);
+
+  // Source 2: bm_utm cookie (middleware captures UTMs into this before redirects)
+  const cookieUtms = readUtmCookie();
+
   const patch: Partial<LeadState> = {};
   for (const k of utmKeys) {
-    const v = params.get(k);
-    // Only set if present in URL AND not already stored (first-touch attribution).
-    if (v && !existing[k]) {
-      patch[k] = v;
+    const fromUrl = params.get(k) || undefined;
+    const fromCookie = cookieUtms[k];
+    const value = fromUrl || fromCookie;
+
+    // Only set if present AND not already stored (first-touch attribution).
+    if (value && !existing[k]) {
+      patch[k] = value;
     }
   }
 
@@ -100,4 +117,18 @@ export function captureUTMsFromURL(): LeadState {
   }
 
   return Object.keys(patch).length ? updateLead(patch) : existing;
+}
+
+/** Read and parse the bm_utm cookie set by middleware. */
+function readUtmCookie(): Partial<UTMs> {
+  if (typeof document === "undefined") return {};
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)bm_utm=([^;]+)/);
+    if (!match) return {};
+    const decoded = decodeURIComponent(match[1]);
+    const parsed = JSON.parse(decoded);
+    return typeof parsed === "object" && parsed ? parsed : {};
+  } catch {
+    return {};
+  }
 }
