@@ -9,9 +9,7 @@
         }
       ],
       "destination": "https://blitzmailer.site/:path*",
-      "permanent": true,
-      "statusCode": 308
+      "permanent": true
     }
   ]
 }
-
