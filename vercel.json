@@ -1,0 +1,16 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.blitzmailer.site"
+        }
+      ],
+      "destination": "https://blitzmailer.site/:path*",
+      "permanent": true,
+      "statusCode": 308
+    }
+  ]
+}
