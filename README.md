@@ -200,3 +200,7 @@ The domain currently points at a GHL funnel. To cut over:
 - **First-touch UTM attribution** — UTMs are captured only if not already stored, so a user who comes in via a paid Meta ad and later returns via a different channel still gets credited to the paid source.
 - **Webhook failures don't block booking** — if the GHL POST fails, we still redirect to Calendly. Lead data is recoverable from Calendly's own submission record.
 - **No secondary nav** — per brief, there are no outbound links except the footer email/phone. Logo links back to `/`.
+-
+-
+-
+-
