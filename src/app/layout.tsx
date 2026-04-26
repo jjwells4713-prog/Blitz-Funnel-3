@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import Script from "next/script";
 import "@/styles/globals.css";
 import Logo from "@/components/Logo";
+import UtmHashCapture from "@/components/UtmHashCapture";
 
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "";
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID || "";
@@ -44,6 +45,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="font-sans antialiased">
+        <UtmHashCapture />
+
         {/* Top bar — logo only, no nav per brief */}
         <header className="absolute left-0 right-0 top-0 z-20">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
