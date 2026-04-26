@@ -13,21 +13,18 @@ type LeadPayload = {
   email?: string;
   phone?: string;
   website?: string;
-
   // Survey
   q1_industry?: string;
   q2_revenue?: string;
   q3_current_channel?: string;
   q4_timeline?: string;
   q5_bottleneck?: string;
-
   // UTMs (first-touch)
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
   utm_content?: string;
   utm_term?: string;
-
   // Meta
   landed_at?: string;
   referrer?: string;
@@ -73,31 +70,30 @@ export async function POST(req: Request) {
     email: body.email,
     phone: body.phone,
     website: body.website,
-
     // Survey answers (flat, snake_case — map these in GHL to custom fields)
     q1_industry: body.q1_industry,
     q2_revenue: body.q2_revenue,
     q3_current_channel: body.q3_current_channel,
     q4_timeline: body.q4_timeline,
     q5_bottleneck: body.q5_bottleneck,
-
     // Attribution
     utm_source: body.utm_source,
     utm_medium: body.utm_medium,
     utm_campaign: body.utm_campaign,
     utm_content: body.utm_content,
     utm_term: body.utm_term,
-
     // Meta
     landed_at: body.landed_at,
     submitted_at: new Date().toISOString(),
     referrer: body.referrer,
     ip,
     user_agent: userAgent,
-
     // Source tag so you can filter in GHL smart lists.
     source: "blitzmailer_funnel",
   };
+
+  console.log("[submit-lead] received body:", JSON.stringify(body));
+  console.log("[submit-lead] sending payload:", JSON.stringify(payload));
 
   try {
     const res = await fetch(webhookUrl, {
