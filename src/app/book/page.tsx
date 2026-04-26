@@ -35,7 +35,7 @@ export default function BookPage() {
 
         <Suspense
           fallback={
-            <div className="mt-8 h-[700px] animate-pulse rounded-2xl border border-white/10 bg-white/[0.02]" />
+            <div className="mt-8 h-[850px] animate-pulse rounded-2xl border border-white/10 bg-white/[0.02]" />
           }
         >
           <BookEmbed />
@@ -88,8 +88,6 @@ function BookEmbed() {
   // Redirect to /thanks when GHL fires its post-booking message event.
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
-      // GHL posts a message when booking succeeds. We accept any message from the
-      // leadconnector domain and look for booking-completion signals.
       const origin = event.origin || "";
       if (!origin.includes("leadconnectorhq.com") && !origin.includes("msgsndr.com")) {
         return;
@@ -114,11 +112,17 @@ function BookEmbed() {
         <iframe
           src={iframeSrc}
           title="Book a strategy call"
-          style={{ width: "100%", minWidth: "320px", height: "700px", border: "0" }}
-          scrolling="no"
+          style={{
+            width: "100%",
+            minWidth: "320px",
+            height: "850px",
+            border: "0",
+            display: "block",
+            background: "transparent",
+          }}
         />
       ) : (
-        <div className="h-[700px] animate-pulse bg-white/[0.02]" />
+        <div className="h-[850px] animate-pulse bg-white/[0.02]" />
       )}
     </div>
   );
