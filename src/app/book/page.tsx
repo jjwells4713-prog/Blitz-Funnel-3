@@ -107,7 +107,7 @@ function BookEmbed() {
   }, [router]);
 
   return (
-    <div className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] shadow-glow">
+<div className="mt-8 overflow-hidden rounded-2xl shadow-glow" style={{ background: "#0a0a0f" }}>
       {iframeSrc ? (
         <iframe
           src={iframeSrc}
