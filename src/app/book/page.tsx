@@ -2,13 +2,12 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { InlineWidget, useCalendlyEventListener } from "react-calendly";
 import Logo from "@/components/Logo";
 import { loadLead } from "@/lib/storage";
 
-const CALENDLY_URL =
-  process.env.NEXT_PUBLIC_CALENDLY_URL ||
-  "https://calendly.com/jackson-blitzmailer-syp_/blitz-mailer-strategy-call";
+const GHL_BOOKING_URL =
+  process.env.NEXT_PUBLIC_GHL_BOOKING_URL ||
+  "https://api.leadconnectorhq.com/widget/bookings/blitz-mailer-strategy-call";
 
 export default function BookPage() {
   return (
@@ -53,60 +52,70 @@ export default function BookPage() {
 function BookEmbed() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const [prefill, setPrefill] = useState<{ name: string; email: string } | null>(
-    null
-  );
+  const [iframeSrc, setIframeSrc] = useState<string | null>(null);
 
   useEffect(() => {
     const qName = searchParams.get("name") || "";
     const qEmail = searchParams.get("email") || "";
+    const qPhone = searchParams.get("phone") || "";
     const saved = loadLead();
-    setPrefill({
-      name: qName || saved.fullName || "",
-      email: qEmail || saved.email || "",
-    });
+
+    const fullName = qName || saved.fullName || "";
+    const email = qEmail || saved.email || "";
+    const phone = qPhone || saved.phone || "";
+
+    // Split full name into first/last for GHL prefill
+    const [firstName, ...rest] = fullName.trim().split(/\s+/);
+    const lastName = rest.join(" ");
+
+    const params = new URLSearchParams();
+    if (firstName) params.set("first_name", firstName);
+    if (lastName) params.set("last_name", lastName);
+    if (email) params.set("email", email);
+    if (phone) params.set("phone", phone);
+
+    // Pass UTMs through so GHL stores them on the contact
+    if (saved.utm_source) params.set("utm_source", saved.utm_source);
+    if (saved.utm_medium) params.set("utm_medium", saved.utm_medium);
+    if (saved.utm_campaign) params.set("utm_campaign", saved.utm_campaign);
+    if (saved.utm_content) params.set("utm_content", saved.utm_content);
+    if (saved.utm_term) params.set("utm_term", saved.utm_term);
+
+    const qs = params.toString();
+    setIframeSrc(qs ? `${GHL_BOOKING_URL}?${qs}` : GHL_BOOKING_URL);
   }, [searchParams]);
 
-  // Redirect to /thanks when Calendly fires event_scheduled.
-  useCalendlyEventListener({
-    onEventScheduled: () => {
-      router.push("/thanks");
-    },
-  });
-
-  // Pass UTMs to Calendly so they land in the scheduling payload (and downstream in GHL).
-  const utm = useMemo(() => {
-    if (typeof window === "undefined") return {};
-    const saved = loadLead();
-    return {
-      utmSource: saved.utm_source,
-      utmMedium: saved.utm_medium,
-      utmCampaign: saved.utm_campaign,
-      utmContent: saved.utm_content,
-      utmTerm: saved.utm_term,
+  // Redirect to /thanks when GHL fires its post-booking message event.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      // GHL posts a message when booking succeeds. We accept any message from the
+      // leadconnector domain and look for booking-completion signals.
+      const origin = event.origin || "";
+      if (!origin.includes("leadconnectorhq.com") && !origin.includes("msgsndr.com")) {
+        return;
+      }
+      const data = event.data;
+      const dataStr = typeof data === "string" ? data : JSON.stringify(data || {});
+      if (
+        dataStr.includes("appointment") ||
+        dataStr.includes("booking") ||
+        dataStr.includes("scheduled")
+      ) {
+        router.push("/thanks");
+      }
     };
-  }, []);
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [router]);
 
   return (
     <div className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] shadow-glow">
-      {prefill ? (
-        <InlineWidget
-          url={CALENDLY_URL}
-          prefill={{
-            name: prefill.name,
-            email: prefill.email,
-          }}
-          utm={utm}
-          styles={{ height: "700px", minWidth: "320px" }}
-          pageSettings={{
-            backgroundColor: "0A0A0F",
-            primaryColor: "7C3AED",
-            textColor: "FFFFFF",
-            hideEventTypeDetails: false,
-            hideLandingPageDetails: false,
-            hideGdprBanner: true,
-          }}
+      {iframeSrc ? (
+        <iframe
+          src={iframeSrc}
+          title="Book a strategy call"
+          style={{ width: "100%", minWidth: "320px", height: "700px", border: "0" }}
+          scrolling="no"
         />
       ) : (
         <div className="h-[700px] animate-pulse bg-white/[0.02]" />
