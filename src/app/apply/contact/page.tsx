@@ -26,7 +26,6 @@ function normalizeWebsite(raw: string): string {
 function isValidURL(s: string): boolean {
   try {
     const u = new URL(s);
-    // Require at least a dot in the hostname to catch "https://foo"
     return !!u.hostname && u.hostname.includes(".");
   } catch {
     return false;
@@ -34,7 +33,6 @@ function isValidURL(s: string): boolean {
 }
 
 function normalizePhone(raw: string): string {
-  // Accept international; strip everything except digits, plus, spaces, dashes, parens.
   return raw.replace(/[^\d+\-\s()]/g, "").trim();
 }
 
@@ -79,9 +77,12 @@ export default function ContactPage() {
     if (!f.phone?.trim() || !isValidPhone(f.phone)) {
       e.phone = "Please enter a valid phone number.";
     }
-    const normalized = normalizeWebsite(f.website || "");
-    if (!normalized || !isValidURL(normalized)) {
-      e.website = "Please enter a valid website (e.g. example.com).";
+    // Website is now OPTIONAL — only validate if user filled it in.
+    if (f.website && f.website.trim()) {
+      const normalized = normalizeWebsite(f.website);
+      if (!isValidURL(normalized)) {
+        e.website = "Please enter a valid website (e.g. example.com).";
+      }
     }
     return e;
   };
@@ -101,7 +102,7 @@ export default function ContactPage() {
       fullName: form.fullName?.trim(),
       email: form.email?.trim().toLowerCase(),
       phone: normalizePhone(form.phone || ""),
-      website: normalizeWebsite(form.website || ""),
+      website: form.website?.trim() ? normalizeWebsite(form.website) : "",
     };
 
     const errs = validate(cleaned);
@@ -116,24 +117,21 @@ export default function ContactPage() {
     const fullState = updateLead(cleaned);
 
     // Fire-and-forget POST — but await briefly so we can detect outright failure.
-    // Per brief: if this fails, still redirect so the user can book.
     try {
       const res = await fetch("/api/submit-lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(fullState),
-        // Keepalive lets the request finish even if the page starts navigating.
         keepalive: true,
       });
       if (!res.ok) {
-        // Log but continue — the goal is to get them booking.
         console.warn("[submit-lead] non-OK response", res.status);
       }
     } catch (err) {
       console.warn("[submit-lead] request failed", err);
     }
 
-    // Redirect to Calendly step with prefill params.
+    // Redirect to booking step with prefill params.
     const params = new URLSearchParams({
       name: cleaned.fullName || "",
       email: cleaned.email || "",
@@ -204,7 +202,7 @@ export default function ContactPage() {
               disabled={!hydrated}
             />
             <Field
-              label="Company Website"
+              label="Company Website (optional)"
               name="website"
               type="text"
               autoComplete="url"
