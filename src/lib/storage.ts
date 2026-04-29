@@ -3,7 +3,6 @@
  * Cleared on browser tab close (not on refresh) — which is the right TTL
  * for a single-session funnel.
  */
-
 const KEY = "blitzmailer_lead_v1";
 
 export type SurveyAnswers = {
@@ -22,6 +21,15 @@ export type UTMs = {
   utm_term?: string;
 };
 
+export type AdParams = {
+  campaign_id?: string;
+  ad_id?: string;
+  ad_name?: string;
+  campaign_name?: string;
+  adset_id?: string;
+  adset_name?: string;
+};
+
 export type Contact = {
   fullName?: string;
   email?: string;
@@ -31,6 +39,7 @@ export type Contact = {
 
 export type LeadState = SurveyAnswers &
   UTMs &
+  AdParams &
   Contact & {
     landed_at?: string; // ISO timestamp of first landing
     referrer?: string;
@@ -71,7 +80,7 @@ export function clearLead(): void {
   }
 }
 
-/** Capture UTMs from the current URL on first visit; returns the merged state.
+/** Capture UTMs and ad params from the current URL on first visit; returns the merged state.
  *
  * Reads from two sources, in priority order:
  *   1. Current URL search params
@@ -83,6 +92,7 @@ export function clearLead(): void {
  */
 export function captureUTMsFromURL(): LeadState {
   if (typeof window === "undefined") return {};
+
   const existing = loadLead();
 
   const utmKeys: (keyof UTMs)[] = [
@@ -93,19 +103,36 @@ export function captureUTMsFromURL(): LeadState {
     "utm_term",
   ];
 
+  const adParamKeys: (keyof AdParams)[] = [
+    "campaign_id",
+    "ad_id",
+    "ad_name",
+    "campaign_name",
+    "adset_id",
+    "adset_name",
+  ];
+
   // Source 1: URL search params
   const params = new URLSearchParams(window.location.search);
-
   // Source 2: bm_utm cookie (middleware captures UTMs into this before redirects)
   const cookieUtms = readUtmCookie();
 
   const patch: Partial<LeadState> = {};
+
   for (const k of utmKeys) {
     const fromUrl = params.get(k) || undefined;
-    const fromCookie = cookieUtms[k];
+    const fromCookie = cookieUtms[k as keyof UTMs];
     const value = fromUrl || fromCookie;
-
     // Only set if present AND not already stored (first-touch attribution).
+    if (value && !existing[k]) {
+      patch[k] = value;
+    }
+  }
+
+  for (const k of adParamKeys) {
+    const fromUrl = params.get(k) || undefined;
+    const fromCookie = (cookieUtms as Record<string, string | undefined>)[k];
+    const value = fromUrl || fromCookie;
     if (value && !existing[k]) {
       patch[k] = value;
     }
@@ -120,7 +147,7 @@ export function captureUTMsFromURL(): LeadState {
 }
 
 /** Read and parse the bm_utm cookie set by middleware. */
-function readUtmCookie(): Partial<UTMs> {
+function readUtmCookie(): Partial<UTMs & AdParams> {
   if (typeof document === "undefined") return {};
   try {
     const match = document.cookie.match(/(?:^|;\s*)bm_utm=([^;]+)/);
