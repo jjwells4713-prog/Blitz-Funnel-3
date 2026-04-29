@@ -13,18 +13,29 @@ type LeadPayload = {
   email?: string;
   phone?: string;
   website?: string;
+
   // Survey
   q1_industry?: string;
   q2_revenue?: string;
   q3_current_channel?: string;
   q4_timeline?: string;
   q5_bottleneck?: string;
+
   // UTMs (first-touch)
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
   utm_content?: string;
   utm_term?: string;
+
+  // Meta ad URL parameters
+  campaign_id?: string;
+  ad_id?: string;
+  ad_name?: string;
+  campaign_name?: string;
+  adset_id?: string;
+  adset_name?: string;
+
   // Meta
   landed_at?: string;
   referrer?: string;
@@ -32,6 +43,7 @@ type LeadPayload = {
 
 export async function POST(req: Request) {
   const webhookUrl = process.env.GHL_WEBHOOK_URL;
+
   if (!webhookUrl) {
     console.error("[submit-lead] GHL_WEBHOOK_URL is not set");
     return NextResponse.json(
@@ -70,24 +82,36 @@ export async function POST(req: Request) {
     email: body.email,
     phone: body.phone,
     website: body.website,
+
     // Survey answers (flat, snake_case — map these in GHL to custom fields)
     q1_industry: body.q1_industry,
     q2_revenue: body.q2_revenue,
     q3_current_channel: body.q3_current_channel,
     q4_timeline: body.q4_timeline,
     q5_bottleneck: body.q5_bottleneck,
-    // Attribution
+
+    // Attribution — UTMs
     utm_source: body.utm_source,
     utm_medium: body.utm_medium,
     utm_campaign: body.utm_campaign,
     utm_content: body.utm_content,
     utm_term: body.utm_term,
+
+    // Attribution — Meta ad URL parameters
+    campaign_id: body.campaign_id,
+    ad_id: body.ad_id,
+    ad_name: body.ad_name,
+    campaign_name: body.campaign_name,
+    adset_id: body.adset_id,
+    adset_name: body.adset_name,
+
     // Meta
     landed_at: body.landed_at,
     submitted_at: new Date().toISOString(),
     referrer: body.referrer,
     ip,
     user_agent: userAgent,
+
     // Source tag so you can filter in GHL smart lists.
     source: "blitzmailer_funnel",
   };
