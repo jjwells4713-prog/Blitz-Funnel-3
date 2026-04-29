@@ -14,7 +14,6 @@ export default function VSL() {
   useEffect(() => {
     window._wq = window._wq || [];
     let alreadyFired = false;
-
     window._wq.push({
       id: WISTIA_ID,
       onReady: (video) => {
@@ -38,7 +37,7 @@ export default function VSL() {
         {/* Custom element — dangerouslySetInnerHTML keeps SSR clean. */}
         <div
           dangerouslySetInnerHTML={{
-            __html: `<wistia-player media-id="${WISTIA_ID}" aspect="1.7777777777777777"></wistia-player>`,
+            __html: `<wistia-player media-id="${WISTIA_ID}" aspect="1.7777777777777777" autoplay="true" muted="true" playsinline="true"></wistia-player>`,
           }}
         />
       </div>
